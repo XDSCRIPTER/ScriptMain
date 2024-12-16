@@ -1,0 +1,285 @@
+local library = loadstring(game.HttpGet(game, "https://raw.githubusercontent.com/XDSCRIPTER/CosmicUI/refs/heads/main/scriptUPDATEDDDd"))()
+local character = game:GetService("Players").LocalPlayer.Character
+
+
+if not workspace:FindFirstChild("DotsFolder")  then
+local foldFordots = Instance.new("Model")
+foldFordots.Name = "DotsFolder"
+foldFordots.Parent = game.workspace
+end
+
+local p = game.Players.LocalPlayer.Character
+local speed = 16
+local MountainClimber = 46
+
+if not workspace.DotsFolder:FindFirstChild("Counter")  then
+local Counter = Instance.new("IntValue")
+Counter.Name = "Counter"
+Counter.Parent = game.workspace.DotsFolder
+end
+
+if not workspace.DotsFolder:FindFirstChild("HowMuch?")  then
+local HowMuch = Instance.new("IntValue")
+HowMuch.Name = "HowMuch"
+HowMuch.Parent = game.workspace.DotsFolder
+end
+
+if not workspace.DotsFolder:FindFirstChild("Highlight")  then
+local metka = Instance.new("Highlight")
+metka.Parent = game.workspace.DotsFolder
+metka.Enabled = false
+end
+
+local player = game.Players.LocalPlayer
+local waypoints = game.workspace:FindFirstChild("DotsFolder"):GetChildren()
+local TweenService = game:GetService("TweenService")
+local tweenInfo = TweenInfo.new(3,Enum.EasingStyle.Linear)
+
+
+local function reload() --this reloads the player list when called
+
+	local s = game.workspace:FindFirstChild("DotsFolder"):Clone()
+	s.Parent = workspace
+	if game.workspace:FindFirstChild("DotsFolder") ~= s then
+	wait(1)
+	game.workspace:FindFirstChild("DotsFolder"):Remove()
+end
+end
+
+_G.TweenToPoints = false
+
+
+local function moveToWaypoint(waypoint)
+local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+if not hrp then return end -- Handle case where character isn't loaded yet
+
+local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+if not humanoid then return end --Handle case where humanoid isn't loaded yet
+
+local targetPosition = waypoint.Position
+local success, err = pcall(function()
+	humanoid:MoveTo(targetPosition)
+	humanoid.MoveToFinished:Wait()
+	
+end)
+
+if player.Character:FindFirstChild("HumanoidRootPart").Position.Y + 5 <= waypoint.Position.Y and player.Character:FindFirstChild("Humanoid").MoveToFinished then
+	local tween = TweenService:Create(hrp, tweenInfo, { CFrame = waypoint.CFrame })
+	tween:Play()
+	tween.Completed:Wait()
+end
+end
+
+
+local function moveToWaypoints()
+if player and player.Character then
+	for _, waypoint in ipairs(game.workspace:FindFirstChild("DotsFolder"):GetChildren())  do
+	if waypoint.Name ~= "Counter" and waypoint.Name ~= "Highlight" and waypoint.Name ~= "HowMuch" then
+		moveToWaypoint(waypoint)
+	end
+	end
+end
+end
+
+
+
+
+local w1 = library:Window("Tween") -- Text
+local w2 = library:Window("Tween Configs")
+local w3 = library:Window("Main") -- Text
+
+w1:Toggle(
+    "Move To Points",
+    "frz",
+    false,
+    function(toggled)
+        _G.TweenToPoints = toggled
+	
+	moveToWaypoints()
+	while true do
+	if _G.TweenToPoints then
+		moveToWaypoints()
+		wait(0.1)
+	else 
+	player.Character.Humanoid:MoveTo(player.Character:FindFirstChild("HumanoidRootPart").Position)
+	reload()
+		break
+	end
+		
+	end
+    end
+) -- Text, Flag, Enabled, Callback, Flag Location (Optional)
+
+w1:Button(
+    "Create Waypoint",
+    function()
+        local function adddots()
+
+
+			local Dot = Instance.new("Part")
+			Dot.Parent = game.workspace.DotsFolder
+			Dot.Anchored = true 
+			Dot.CFrame = p:FindFirstChild("HumanoidRootPart").CFrame
+			Dot.Size =  Vector3.new(0.5,0.5,0.5)
+			Dot.Color = Color3.fromRGB(0, 0, 255)
+			Dot.CanCollide = false
+			Dot.Material = Enum.Material.Neon
+			Dot.Transparency = 0
+			print( game.workspace:FindFirstChild("DotsFolder").Counter.Value)
+			Dot.Name =  game.workspace:FindFirstChild("DotsFolder").Counter.Value
+
+		end
+	
+
+
+		game.workspace:FindFirstChild("DotsFolder").Counter.Value = game.workspace:FindFirstChild("DotsFolder").Counter.Value + 1
+		game.workspace:FindFirstChild("DotsFolder").HowMuch.Value = game.workspace:FindFirstChild("DotsFolder").HowMuch.Value + 1
+		adddots()
+        
+    end
+) -- Text, Callback
+
+w1:Toggle(
+    "Visible WayPoints",
+    "frz",
+    false,
+    function(toggled)
+        workspace.DotsFolder.Highlight.Enabled = toggled
+    end
+) -- Text, Flag, Enabled, Callback, Flag Location (Optional)
+
+w2:Button(
+    "Save Config #1",
+    function()
+      local function strfromtable(tbl)
+   local ret = {}
+   for _,v in pairs(game.workspace.DotsFolder:GetChildren()) do
+   if v.Name ~= "Counter" and v.Name ~= "Highlight" and v.Name ~= "HowMuch" then
+    table.insert(ret,"{"..'"'.."X"..'"'..":".. v.Position.X..",")
+    table.insert(ret,'"'.."Y"..'"'..":"..v.Position.Y..",")
+    table.insert(ret,'"'.."Z"..'"'..":"..v.Position.Z.. "}"..","   )
+   end
+   end
+   return table.concat(ret)
+end
+
+
+
+
+writefile("TweensCFG1.json","{".. '"'.. "position".. '"'.. ":".. "[".. strfromtable(game.workspace.DotsFolder:GetChildren()).. '"'.."EndPose".. '"'.."]".. "}")
+	  
+    end
+) -- Text, Callback
+
+w2:Button(
+    "Load Config#1",
+    function()
+       local HttpService = game:GetService('HttpService')
+		local WaypointData = HttpService:JSONDecode(readfile('TweensCFG1.json'))
+				local Ignore = {"EndPose"}
+				for index, position in WaypointData.position do
+				position = Vector3.new(position.X, position.Y, position.Z)
+				
+				game.workspace:FindFirstChild("DotsFolder").Counter.Value = game.workspace:FindFirstChild("DotsFolder").Counter.Value + 1
+				
+	
+        local Dot = Instance.new("Part")
+								Dot.Parent = game.workspace.DotsFolder
+								Dot.Anchored = true 
+								Dot.Position = position
+								Dot.Name = game.workspace:FindFirstChild("DotsFolder").Counter.Value
+								Dot.Size =  Vector3.new(0.5,0.5,0.5)
+								Dot.Color = Color3.fromRGB(0, 0, 255)
+								Dot.CanCollide = false
+								Dot.Material = Enum.Material.Neon
+								Dot.Transparency = 0
+				
+			if Dot.CFrame == CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1) then
+				Dot:Remove()
+			end
+   
+end
+				
+    end
+) -- Text, Callback
+
+
+
+w2:Button(
+    "Save Config #2",
+    function()
+      local function strfromtable(tbl)
+   local ret = {}
+   for _,v in pairs(game.workspace.DotsFolder:GetChildren()) do
+   if v.Name ~= "Counter" and v.Name ~= "Highlight" and v.Name ~= "HowMuch" then
+    table.insert(ret,"{"..'"'.."X"..'"'..":".. v.Position.X..",")
+    table.insert(ret,'"'.."Y"..'"'..":"..v.Position.Y..",")
+    table.insert(ret,'"'.."Z"..'"'..":"..v.Position.Z.. "}"..","   )
+   end
+   end
+   return table.concat(ret)
+end
+
+
+
+
+writefile("TweensCFG2.json","{".. '"'.. "position".. '"'.. ":".. "[".. strfromtable(game.workspace.DotsFolder:GetChildren()).. '"'.."EndPose".. '"'.."]".. "}")
+	  
+    end
+) -- Text, Callback
+
+w2:Button(
+    "Load Config#2",
+    function()
+       local HttpService = game:GetService('HttpService')
+		local WaypointData = HttpService:JSONDecode(readfile('TweensCFG2.json'))
+			
+				for index, position in WaypointData.position do
+				position = Vector3.new(position.X, position.Y, position.Z)
+				
+				game.workspace:FindFirstChild("DotsFolder").Counter.Value = game.workspace:FindFirstChild("DotsFolder").Counter.Value + 1
+				
+				
+				
+				local Dot = Instance.new("Part")
+								Dot.Parent = game.workspace.DotsFolder
+								Dot.Anchored = true 
+								Dot.Position = position
+								Dot.Name = game.workspace:FindFirstChild("DotsFolder").Counter.Value
+								Dot.Size =  Vector3.new(0.5,0.5,0.5)
+								Dot.Color = Color3.fromRGB(0, 0, 255)
+								Dot.CanCollide = false
+								Dot.Material = Enum.Material.Neon
+								Dot.Transparency = 0
+
+            if Dot.CFrame == CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1) then
+			Dot:Remove()
+			end
+
+				end
+    end
+) -- Text, Callba
+
+
+
+w1:Label("Niggas Hub") -- Text
+
+w1:Slider(
+    "WalkSpeed",
+    "WS",
+    16,
+    24,
+    function(value)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+    end
+) -- Text, Flag, Minimum, Maximum, Callback, Default (Optional), Flag Location (Optional)
+
+--dizaintepta
+
+
+
+
+
+
+ 
+
